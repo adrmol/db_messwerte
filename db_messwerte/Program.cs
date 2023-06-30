@@ -35,9 +35,18 @@ namespace db_messwerte
                 using (MySqlConnection connection = new MySqlConnection(connectionString))
                 {
                     connection.Open();
-                    
+
                     using (MySqlCommand command = connection.CreateCommand())
                     {
+                        command.CommandText = "CREATE DATABASE IF NOT EXISTS messwerte";
+                        command.ExecuteNonQuery();
+                        command.CommandText = @"CREATE TABLE IF NOT EXISTS messungen(
+                            id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+                            temperaturfuehler varchar(32) NOT NULL,
+                            datum DATETIME NOT NULL,
+                            temperatur float)";
+                        command.ExecuteNonQuery();
+
                         command.CommandText = "INSERT INTO messungen (temperaturfuehler, datum, temperatur) VALUES (@tf, @d, @t);";
                         command.Parameters.AddWithValue("@tf", t_fuehler);
                         command.Parameters.AddWithValue("@d", datum);
