@@ -12,7 +12,8 @@ namespace db_messwerte
         {
             var list = new List<List<string>>();
 
-            using (var reader = new StreamReader("2023-02-17.dat"))
+            // Daten aus der Datein einlesen, drei Ordner über der exe
+            using (var reader = new StreamReader(@"..\..\..\2023-02-17.dat"))
             {
                 while (!reader.EndOfStream)
                 {
@@ -30,23 +31,34 @@ namespace db_messwerte
                 string datum = v[1];
                 string temperatur = v[2];
 
-                // Verbindung zur MySQL-Datenbank herstellen
-                string connectionString = "Server=localhost;Database=messwerte;Uid=root;";
+                // Verbindung zur MySQL-Datenbankserver herstellen
+                string server = "localhost";
+                string database = "messwerte";
+                string uid = "root";
+                string connectionString = $"Server={server};Uid={uid};";
+
                 using (MySqlConnection connection = new MySqlConnection(connectionString))
                 {
                     connection.Open();
 
                     using (MySqlCommand command = connection.CreateCommand())
                     {
-                        command.CommandText = "CREATE DATABASE IF NOT EXISTS messwerte";
-                        command.ExecuteNonQuery();
-                        command.CommandText = @"CREATE TABLE IF NOT EXISTS messungen(
-                            id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
-                            temperaturfuehler varchar(32) NOT NULL,
-                            datum DATETIME NOT NULL,
-                            temperatur float)";
+                        // Datenbank erstellen falls nicht vorhanden
+                        command.CommandText = $"CREATE DATABASE IF NOT EXISTS {database}";
                         command.ExecuteNonQuery();
 
+                        // Verbindung mit der Datenbank
+                        connection.ChangeDatabase(database);
+
+                        // Tabellen erstellen falls nicht vorhanden
+                        command.CommandText = @"CREATE TABLE IF NOT EXISTS messungen(
+                                                    id int AUTO_INCREMENT PRIMARY KEY NOT NULL,
+                                                    temperaturfuehler varchar(32) NOT NULL,
+                                                    datum DATETIME NOT NULL,
+                                                    temperatur float)";
+                        command.ExecuteNonQuery();
+
+                        // Daten einspeichern
                         command.CommandText = "INSERT INTO messungen (temperaturfuehler, datum, temperatur) VALUES (@tf, @d, @t);";
                         command.Parameters.AddWithValue("@tf", t_fuehler);
                         command.Parameters.AddWithValue("@d", datum);
